@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MapLeads Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="popup-shell">
+    <header class="header">
+      <div class="header-left">
+        <span class="logo-icon" aria-hidden="true">📍</span>
+        <div>
+          <h1 class="title">MapLeads Pro</h1>
+          <p class="subtitle">Website-less Business Finder</p>
+        </div>
+      </div>
+      <div class="status-dot" id="statusDot" data-state="idle"></div>
+    </header>
+
+    <div class="status-banner" id="statusBanner" data-state="idle">
+      <span class="status-icon">⚡</span>
+      <span class="status-text" id="statusText">Ready to scan Google Maps</span>
+    </div>
+
+    <section class="controls">
+      <button class="btn-scan" id="btnScan" type="button">
+        <span class="btn-icon">🔍</span>
+        <span class="btn-text" id="scanButtonText">Start Scan</span>
+        <span class="btn-loader" id="btnLoader" aria-hidden="true"></span>
+      </button>
+      <button class="btn-stop hidden" id="btnStop" type="button">⏹ Stop</button>
+      <button class="btn-quick-download hidden" id="btnQuickDownload" type="button">⬇ Download Leads</button>
+    </section>
+
+    <section class="filters-panel">
+      <div class="filter-row">
+        <label class="filter-label" for="filterNoWebsite">No Website Only</label>
+        <label class="toggle">
+          <input type="checkbox" id="filterNoWebsite" checked />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="filter-row">
+        <label class="filter-label" for="filterIncludeClosed">Include Permanently Closed</label>
+        <label class="toggle">
+          <input type="checkbox" id="filterIncludeClosed" />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="filter-row">
+        <label class="filter-label" for="filterDeepScan">Deep Scan <span class="badge-slow">Slower</span></label>
+        <label class="toggle">
+          <input type="checkbox" id="filterDeepScan" />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="filter-row slider-row">
+        <label class="filter-label" for="scrollDepth">Scroll Depth: <span id="scrollDepthVal">3x</span></label>
+        <input type="range" id="scrollDepth" min="1" max="10" value="3" class="slider" />
+      </div>
+      <div class="progress-wrap hidden" id="progressWrap">
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats-bar hidden" id="statsBar">
+      <div class="stat-card">
+        <div class="stat-icon">🏢</div>
+        <div class="stat-value" id="countTotal">0</div>
+        <div class="stat-label">Scanned</div>
+      </div>
+      <div class="stat-card accent-green">
+        <div class="stat-icon">🎯</div>
+        <div class="stat-value" id="countLeads">0</div>
+        <div class="stat-label">No Website</div>
+      </div>
+      <div class="stat-card accent-cyan">
+        <div class="stat-icon">📞</div>
+        <div class="stat-value" id="countPhone">0</div>
+        <div class="stat-label">Has Phone</div>
+      </div>
+    </section>
+
+    <section class="results-section hidden" id="resultsSection">
+      <div class="results-header">
+        <span class="results-title">Live Results</span>
+        <button class="btn-clear" id="btnClear" type="button">Clear</button>
+      </div>
+      <div class="results-table-wrapper">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Business</th>
+              <th>Category</th>
+              <th>Phone</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="export-panel hidden" id="exportPanel">
+      <h3 class="export-title">Export Your Leads</h3>
+      <button class="btn-download" id="btnDownload" type="button">⬇ Download Leads</button>
+      <div class="export-options">
+        <label class="checkbox-label">
+          <input type="checkbox" id="exportNoWebsiteOnly" checked />
+          No-website leads only
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="exportAllFields" checked />
+          Include all fields
+        </label>
+      </div>
+      <div class="export-buttons">
+        <button class="btn-export btn-excel" id="btnExcel" type="button">📊 Excel (.xlsx)</button>
+        <button class="btn-export btn-csv" id="btnCSV" type="button">📄 CSV</button>
+        <button class="btn-export btn-sheets" id="btnSheets" type="button">🔗 Google Sheets</button>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>⚡ Powered by MapLeads Pro v1.0</span>
+      <button class="btn-help" id="btnHelp" type="button">How to use?</button>
+    </footer>
+  </div>
+
+  <div class="modal-overlay hidden" id="helpModal">
+    <div class="modal">
+      <h3>How to Use MapLeads Pro</h3>
+      <ol>
+        <li>Open Google Maps in Chrome.</li>
+        <li>Search for a business type and city.</li>
+        <li>Click the MapLeads Pro extension icon.</li>
+        <li>Set filters, then click Start Scan.</li>
+        <li>Wait for scan completion and export your leads.</li>
+      </ol>
+      <button class="btn-close-modal" id="btnCloseModal" type="button">Got it! ✓</button>
+    </div>
+  </div>
+
+  <script src="libs/xlsx.full.min.js"></script>
+  <script src="libs/papaparse.min.js"></script>
+  <script src="utils/storage.js"></script>
+  <script src="utils/exporter.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
