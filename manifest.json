@@ -17,7 +17,15 @@
     }
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "scripts": ["background.js"],
+    "type": "module"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "leadsforge@envy.xyz",
+      "strict_min_version": "109.0"
+    }
   },
   "content_scripts": [
     {
