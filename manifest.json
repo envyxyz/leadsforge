@@ -1,15 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "MapLeads Pro — Website-less Business Finder",
-  "version": "1.0.0",
-  "description": "Scrape Google Maps for businesses without websites and export as leads for web design outreach.",
-  "permissions": [
-    "activeTab",
-    "scripting",
-    "storage",
-    "downloads",
-    "tabs"
-  ],
+  "name": "LeadsForge — Google Maps Lead Scraper",
+  "version": "2.0.0",
+  "description": "Scrape Google Maps for business leads with advanced filtering, multi-location support, and one-click export to Excel, CSV, or Google Sheets.",
+  "permissions": ["activeTab", "scripting", "storage", "downloads", "tabs"],
   "host_permissions": [
     "https://www.google.com/maps/*",
     "https://maps.google.com/*"
@@ -17,9 +11,9 @@
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
+      "16": "icons/icon16.jpeg",
+      "48": "icons/icon48.jpeg",
+      "128": "icons/icon128.jpeg"
     }
   },
   "background": {

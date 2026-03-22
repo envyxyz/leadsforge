@@ -1,22 +1,40 @@
-const MapLeadsExporter = (() => {
+const LeadsForgeExporter = (() => {
   function normalizeRows(data, includeAllFields = true) {
-    const baseRows = (Array.isArray(data) ? data : []).map((b) => ({
-      "Business Name": b.name || "N/A",
-      Category: b.category || "N/A",
-      Phone: b.phone || "N/A",
-      Email: b.email || "N/A",
-      Address: b.address || "N/A",
-      "Has Website": b.hasWebsite ? "Yes" : "No",
-      "Website URL": b.website || "",
-      Rating: b.rating || "N/A",
-      "Total Reviews": b.reviews || "0",
-      "Business Hours": b.hours || "N/A",
-      "Price Range": b.priceRange || "N/A",
-      "Plus Code": b.plusCode || "N/A",
-      "Open Status": b.isOpen === false ? "Closed" : "Open/Unknown",
-      "Google Maps URL": b.mapsUrl || "",
-      "Scraped At": b.scrapedAt || ""
-    }));
+    const baseRows = (Array.isArray(data) ? data : []).map((b) => {
+      const socials = b.socials || {};
+      const socialLinks = [
+        socials.facebook,
+        socials.instagram,
+        socials.twitter,
+        socials.linkedin,
+        socials.youtube,
+        socials.tiktok
+      ].filter(Boolean).join(", ");
+
+      return {
+        "Business Name": b.name || "N/A",
+        Category: b.category || "N/A",
+        Phone: b.phone || "N/A",
+        Email: b.email || "N/A",
+        Address: b.address || "N/A",
+        Rating: b.rating || "N/A",
+        "Total Reviews": b.reviews || "0",
+        Website: b.website || "",
+        Facebook: socials.facebook || "",
+        Instagram: socials.instagram || "",
+        "Twitter / X": socials.twitter || "",
+        LinkedIn: socials.linkedin || "",
+        YouTube: socials.youtube || "",
+        TikTok: socials.tiktok || "",
+        "Social Links": socialLinks || "",
+        "Business Hours": b.hours || "N/A",
+        "Price Range": b.priceRange || "N/A",
+        "Plus Code": b.plusCode || "N/A",
+        "Open Status": b.isPossiblyClosed ? "Possibly Closed" : b.isOpen === false ? "Closed" : "Open",
+        "Google Maps URL": b.mapsUrl || "",
+        "Scraped At": b.scrapedAt || ""
+      };
+    });
 
     if (includeAllFields) {
       return baseRows;
@@ -27,9 +45,12 @@ const MapLeadsExporter = (() => {
       Category: row.Category,
       Phone: row.Phone,
       Email: row.Email,
-      Address: row.Address,
-      "Has Website": row["Has Website"],
-      "Website URL": row["Website URL"],
+      Rating: row.Rating,
+      Website: row.Website,
+      Facebook: row.Facebook,
+      Instagram: row.Instagram,
+      "Twitter / X": row["Twitter / X"],
+      LinkedIn: row.LinkedIn,
       "Google Maps URL": row["Google Maps URL"]
     }));
   }
@@ -39,7 +60,7 @@ const MapLeadsExporter = (() => {
     return `${prefix}_${timestamp}.${ext}`;
   }
 
-  function exportToExcel(data, filenamePrefix = "MapLeads", includeAllFields = true) {
+  function exportToExcel(data, filenamePrefix = "LeadsForge", includeAllFields = true) {
     if (typeof XLSX === "undefined") {
       throw new Error("SheetJS library not found. Add libs/xlsx.full.min.js");
     }
@@ -69,7 +90,7 @@ const MapLeadsExporter = (() => {
     XLSX.writeFile(workbook, fileStamp(filenamePrefix, "xlsx"));
   }
 
-  function exportToCSV(data, filenamePrefix = "MapLeads", includeAllFields = true) {
+  function exportToCSV(data, filenamePrefix = "LeadsForge", includeAllFields = true) {
     if (typeof Papa === "undefined") {
       throw new Error("PapaParse library not found. Add libs/papaparse.min.js");
     }
@@ -91,7 +112,7 @@ const MapLeadsExporter = (() => {
   }
 
   function exportToGoogleSheets(data, includeAllFields = true) {
-    exportToCSV(data, "MapLeads", includeAllFields);
+    exportToCSV(data, "LeadsForge", includeAllFields);
     setTimeout(() => {
       chrome.tabs.create({ url: "https://sheets.new" });
       alert("Google Sheets opened. Import the downloaded CSV via File > Import.");

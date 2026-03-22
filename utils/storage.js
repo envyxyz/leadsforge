@@ -1,4 +1,4 @@
-const MapLeadsStorage = (() => {
+const LeadsForgeStorage = (() => {
   const LOCAL_KEYS = {
     LEADS_CACHE: "popup_leads_cache",
     SETTINGS_CACHE: "popup_settings_cache"

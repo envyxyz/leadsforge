@@ -1,17 +1,21 @@
 const STORAGE_KEYS = {
   LEADS_INDEX: "leads_index",
   LEADS_CHUNK_PREFIX: "leads_chunk_",
-  SETTINGS: "settings"
+  SETTINGS: "settings",
 };
 
 const CHUNK_SIZE = 100;
 
 chrome.runtime.onInstalled.addListener(async () => {
   await chrome.storage.local.set({
-    [STORAGE_KEYS.LEADS_INDEX]: { chunkCount: 0, total: 0, updatedAt: new Date().toISOString() },
-    [STORAGE_KEYS.SETTINGS]: {}
+    [STORAGE_KEYS.LEADS_INDEX]: {
+      chunkCount: 0,
+      total: 0,
+      updatedAt: new Date().toISOString(),
+    },
+    [STORAGE_KEYS.SETTINGS]: {},
   });
-  console.log("MapLeads Pro installed successfully.");
+  console.log("LeadsForge installed successfully.");
 });
 
 function splitIntoChunks(data, size) {
@@ -41,8 +45,8 @@ async function saveLeadsChunked(leads) {
     [STORAGE_KEYS.LEADS_INDEX]: {
       chunkCount: chunks.length,
       total: safeLeads.length,
-      updatedAt: new Date().toISOString()
-    }
+      updatedAt: new Date().toISOString(),
+    },
   };
 
   chunks.forEach((chunk, index) => {
@@ -60,7 +64,10 @@ async function getLeadsChunked() {
     return [];
   }
 
-  const keys = Array.from({ length: meta.chunkCount }, (_, index) => `${STORAGE_KEYS.LEADS_CHUNK_PREFIX}${index}`);
+  const keys = Array.from(
+    { length: meta.chunkCount },
+    (_, index) => `${STORAGE_KEYS.LEADS_CHUNK_PREFIX}${index}`,
+  );
   const chunksData = await chrome.storage.local.get(keys);
 
   const merged = [];
@@ -96,14 +103,23 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === "CLEAR_LEADS") {
     getLeadsChunked()
       .then(async () => {
-        const current = await chrome.storage.local.get(STORAGE_KEYS.LEADS_INDEX);
+        const current = await chrome.storage.local.get(
+          STORAGE_KEYS.LEADS_INDEX,
+        );
         const chunkCount = current?.[STORAGE_KEYS.LEADS_INDEX]?.chunkCount || 0;
-        const keys = Array.from({ length: chunkCount }, (_, index) => `${STORAGE_KEYS.LEADS_CHUNK_PREFIX}${index}`);
+        const keys = Array.from(
+          { length: chunkCount },
+          (_, index) => `${STORAGE_KEYS.LEADS_CHUNK_PREFIX}${index}`,
+        );
         if (keys.length) {
           await chrome.storage.local.remove(keys);
         }
         await chrome.storage.local.set({
-          [STORAGE_KEYS.LEADS_INDEX]: { chunkCount: 0, total: 0, updatedAt: new Date().toISOString() }
+          [STORAGE_KEYS.LEADS_INDEX]: {
+            chunkCount: 0,
+            total: 0,
+            updatedAt: new Date().toISOString(),
+          },
         });
         sendResponse({ success: true });
       })
@@ -122,8 +138,27 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === "GET_SETTINGS") {
     chrome.storage.local
       .get(STORAGE_KEYS.SETTINGS)
-      .then((result) => sendResponse({ settings: result?.[STORAGE_KEYS.SETTINGS] || {} }))
+      .then((result) =>
+        sendResponse({ settings: result?.[STORAGE_KEYS.SETTINGS] || {} }),
+      )
       .catch((error) => sendResponse({ settings: {}, error: error.message }));
+    return true;
+  }
+
+  if (message.type === "NAVIGATE_SEARCH") {
+    const query = message.query || "";
+    const tabId = message.tabId;
+    if (tabId && query) {
+      const url = `https://www.google.com/maps/search/${encodeURIComponent(query)}`;
+      chrome.tabs
+        .update(tabId, { url })
+        .then(() => sendResponse({ success: true }))
+        .catch((error) =>
+          sendResponse({ success: false, error: error.message }),
+        );
+    } else {
+      sendResponse({ success: false, error: "Missing tabId or query" });
+    }
     return true;
   }
 });

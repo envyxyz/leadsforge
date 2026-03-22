@@ -3,8 +3,9 @@
     running: false,
     stopRequested: false,
     filters: {
-      noWebsiteOnly: true,
-      includeClosedBusinesses: false,
+      websiteFilter: "all",
+      minRating: 0,
+      excludeClosed: true,
       deepScan: false,
       scrollDepth: 3
     },
@@ -27,6 +28,15 @@
     "button[aria-label*='More results' i]",
     "button[jsaction*='pane.paginationSection.nextPage']",
     "a[aria-label*='More results' i]"
+  ];
+
+  const SOCIAL_PATTERNS = [
+    { key: "facebook", regex: /(?:https?:\/\/)?(?:www\.)?facebook\.com\/[a-zA-Z0-9._-]+/gi },
+    { key: "instagram", regex: /(?:https?:\/\/)?(?:www\.)?instagram\.com\/[a-zA-Z0-9._-]+/gi },
+    { key: "twitter", regex: /(?:https?:\/\/)?(?:www\.)?(?:twitter\.com|x\.com)\/[a-zA-Z0-9._-]+/gi },
+    { key: "linkedin", regex: /(?:https?:\/\/)?(?:www\.)?linkedin\.com\/(?:company|in)\/[a-zA-Z0-9._-]+/gi },
+    { key: "youtube", regex: /(?:https?:\/\/)?(?:www\.)?youtube\.com\/(?:@|channel\/|c\/)[a-zA-Z0-9._-]+/gi },
+    { key: "tiktok", regex: /(?:https?:\/\/)?(?:www\.)?tiktok\.com\/@[a-zA-Z0-9._-]+/gi }
   ];
 
   function sleep(ms) {
@@ -62,6 +72,80 @@
       .map((value) => value.trim())
       .find((value) => value.replace(/\D/g, "").length >= 7);
     return normalized || null;
+  }
+
+  function extractSocialsFromText(text) {
+    const socials = {
+      facebook: "",
+      instagram: "",
+      twitter: "",
+      linkedin: "",
+      youtube: "",
+      tiktok: ""
+    };
+
+    if (!text) {
+      return socials;
+    }
+
+    for (const pattern of SOCIAL_PATTERNS) {
+      const matches = text.match(pattern.regex);
+      if (matches && matches.length > 0) {
+        let url = matches[0].trim();
+        if (!url.startsWith("http")) {
+          url = `https://${url}`;
+        }
+        socials[pattern.key] = url;
+      }
+    }
+
+    return socials;
+  }
+
+  function extractSocialsFromLinks(container) {
+    const socials = {
+      facebook: "",
+      instagram: "",
+      twitter: "",
+      linkedin: "",
+      youtube: "",
+      tiktok: ""
+    };
+
+    if (!container) {
+      return socials;
+    }
+
+    const allLinks = container.querySelectorAll("a[href]");
+    for (const link of allLinks) {
+      const href = link.href || "";
+      if (/facebook\.com/i.test(href) && !socials.facebook) {
+        socials.facebook = href;
+      } else if (/instagram\.com/i.test(href) && !socials.instagram) {
+        socials.instagram = href;
+      } else if (/(?:twitter\.com|x\.com)/i.test(href) && !socials.twitter) {
+        socials.twitter = href;
+      } else if (/linkedin\.com/i.test(href) && !socials.linkedin) {
+        socials.linkedin = href;
+      } else if (/youtube\.com/i.test(href) && !socials.youtube) {
+        socials.youtube = href;
+      } else if (/tiktok\.com/i.test(href) && !socials.tiktok) {
+        socials.tiktok = href;
+      }
+    }
+
+    return socials;
+  }
+
+  function mergeSocials(a, b) {
+    return {
+      facebook: a.facebook || b.facebook || "",
+      instagram: a.instagram || b.instagram || "",
+      twitter: a.twitter || b.twitter || "",
+      linkedin: a.linkedin || b.linkedin || "",
+      youtube: a.youtube || b.youtube || "",
+      tiktok: a.tiktok || b.tiktok || ""
+    };
   }
 
   function isGoogleMapsSearchPage() {
@@ -110,7 +194,6 @@
       }
     }
 
-    // Ensure uniqueness across mixed selector matches.
     return [...new Set(cards)].filter((card) => card instanceof HTMLElement);
   }
 
@@ -184,17 +267,28 @@
     return domainMatch ? (domainMatch.startsWith("http") ? domainMatch : `https://${domainMatch}`) : null;
   }
 
-  function parseBooleanOpenState(text) {
+  function detectClosedStatus(text) {
     if (!text) {
-      return true;
+      return { isOpen: true, isPossiblyClosed: false };
     }
-    if (/permanently closed|closed/i.test(text)) {
-      return false;
+    if (/permanently closed/i.test(text)) {
+      return { isOpen: false, isPossiblyClosed: true };
     }
-    if (/open|opens/i.test(text)) {
-      return true;
+    if (/temporarily closed/i.test(text)) {
+      return { isOpen: false, isPossiblyClosed: true };
     }
-    return true;
+    if (/closed/i.test(text) && !/opens|closing/i.test(text)) {
+      return { isOpen: false, isPossiblyClosed: true };
+    }
+    return { isOpen: true, isPossiblyClosed: false };
+  }
+
+  function parseNumericRating(ratingStr) {
+    if (!ratingStr || ratingStr === "N/A") {
+      return 0;
+    }
+    const num = parseFloat(ratingStr);
+    return isNaN(num) ? 0 : num;
   }
 
   function extractDataFromCard(cardElement) {
@@ -208,12 +302,22 @@
       website: null,
       hasWebsite: false,
       rating: "N/A",
+      ratingNumeric: 0,
       reviews: "0",
       hours: "N/A",
       priceRange: "N/A",
       isOpen: true,
+      isPossiblyClosed: false,
       plusCode: "N/A",
       mapsUrl: "",
+      socials: {
+        facebook: "",
+        instagram: "",
+        twitter: "",
+        linkedin: "",
+        youtube: "",
+        tiktok: ""
+      },
       scrapedAt: new Date().toISOString()
     };
 
@@ -226,6 +330,7 @@
       ], "Unknown");
 
       business.rating = queryText(cardElement, [".MW4etd", "span[aria-label*='stars' i]", ".fontBodySmall span"], "N/A");
+      business.ratingNumeric = parseNumericRating(business.rating);
       business.reviews = queryText(cardElement, [".UY7F9", "span[aria-label*='reviews' i]", ".fontBodySmall:last-child"], "0").replace(/[()]/g, "");
 
       business.category = queryText(cardElement, [
@@ -262,14 +367,21 @@
         ".fontBodySmall",
         "span[aria-label*='open' i]"
       ], "");
-      business.isOpen = parseBooleanOpenState(statusText);
+      const closedStatus = detectClosedStatus(statusText);
+      business.isOpen = closedStatus.isOpen;
+      business.isPossiblyClosed = closedStatus.isPossiblyClosed;
 
       const detectedEmails = extractEmailsFromText(cardElement.innerText || "");
       if (detectedEmails.length > 0) {
         business.email = detectedEmails[0];
       }
+
+      // Extract socials from card text and links
+      const textSocials = extractSocialsFromText(cardElement.innerText || "");
+      const linkSocials = extractSocialsFromLinks(cardElement);
+      business.socials = mergeSocials(linkSocials, textSocials);
     } catch (error) {
-      console.warn("MapLeads: Failed card extraction", error);
+      console.warn("LeadsForge: Failed card extraction", error);
     }
 
     return business;
@@ -284,7 +396,16 @@
       priceRange: "N/A",
       plusCode: "N/A",
       descriptionDomainWebsite: null,
-      isOpen: null
+      isOpen: null,
+      isPossiblyClosed: false,
+      socials: {
+        facebook: "",
+        instagram: "",
+        twitter: "",
+        linkedin: "",
+        youtube: "",
+        tiktok: ""
+      }
     };
 
     try {
@@ -352,43 +473,45 @@
         ?.find((candidate) => !/google|g\.co|maps/i.test(candidate));
       detailData.descriptionDomainWebsite = domainFromDescription || null;
 
-      detailData.isOpen = parseBooleanOpenState(panelText);
+      const closedStatus = detectClosedStatus(panelText);
+      detailData.isOpen = closedStatus.isOpen;
+      detailData.isPossiblyClosed = closedStatus.isPossiblyClosed;
+
+      // Extract social links from the detail panel
+      const textSocials = extractSocialsFromText(panelText);
+      const linkSocials = extractSocialsFromLinks(panel);
+      detailData.socials = mergeSocials(linkSocials, textSocials);
     } catch (error) {
-      console.warn("MapLeads: Deep scan failed", error);
+      console.warn("LeadsForge: Deep scan failed", error);
     }
 
     return detailData;
   }
 
-  async function scrapeAllVisibleCards() {
-    const cards = getCardElements();
-    const businesses = [];
-
-    for (const card of cards) {
-      if (SCAN_STATE.stopRequested) {
-        break;
-      }
-
-      try {
-        const baseData = extractDataFromCard(card);
-        businesses.push(baseData);
-      } catch (error) {
-        console.warn("MapLeads: Card scrape error", error);
-      }
-    }
-
-    return businesses;
-  }
-
   function filterBusinesses(arr, filters) {
     let results = [...arr];
 
-    if (!filters.includeClosedBusinesses) {
-      results = results.filter((business) => business.isOpen !== false);
+    // Filter by closed status
+    if (filters.excludeClosed) {
+      results = results.filter((business) => !business.isPossiblyClosed && business.isOpen !== false);
     }
 
-    if (filters.noWebsiteOnly) {
+    // Filter by website preference
+    if (filters.websiteFilter === "without") {
       results = results.filter((business) => !business.hasWebsite);
+    } else if (filters.websiteFilter === "with") {
+      results = results.filter((business) => business.hasWebsite);
+    }
+
+    // Filter by minimum rating
+    const minRating = parseFloat(filters.minRating) || 0;
+    if (minRating > 0) {
+      results = results.filter((business) => {
+        if (business.ratingNumeric === 0 && business.rating === "N/A") {
+          return true; // Keep unrated businesses
+        }
+        return business.ratingNumeric >= minRating;
+      });
     }
 
     return results;
@@ -460,9 +583,13 @@
             if (typeof deepData.isOpen === "boolean") {
               baseData.isOpen = deepData.isOpen;
             }
+            if (deepData.isPossiblyClosed) {
+              baseData.isPossiblyClosed = true;
+            }
+            baseData.socials = mergeSocials(deepData.socials, baseData.socials);
           }
 
-          // Final website detection: card website OR detail website OR detected domain in text.
+          // Final website detection
           const inferredDomain = (card.innerText || "")
             .match(/\b(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.(?:com|net|org|io|co|biz|info|app|dev)\b/g)
             ?.find((candidate) => !/google|g\.co|maps/i.test(candidate));
@@ -489,7 +616,7 @@
             await sleep(randomDelay(1500, 3500));
           }
         } catch (cardError) {
-          console.warn("MapLeads: card processing failed, skipping", cardError);
+          console.warn("LeadsForge: card processing failed, skipping", cardError);
         }
       }
 
@@ -524,7 +651,7 @@
       return;
     }
 
-    if (message.type === "PING_MAPLEADS") {
+    if (message.type === "PING_LEADSFORGE") {
       sendResponse({ ok: true, pageReady: isGoogleMapsSearchPage() });
       return;
     }
@@ -542,10 +669,17 @@
     }
 
     if (message.type === "SCRAPE_VISIBLE_ONLY") {
-      scrapeAllVisibleCards()
-        .then((businesses) => sendResponse({ businesses }))
-        .catch((error) => sendResponse({ error: error.message }));
-      return true;
+      const cards = getCardElements();
+      const businesses = [];
+      for (const card of cards) {
+        try {
+          businesses.push(extractDataFromCard(card));
+        } catch (err) {
+          console.warn("LeadsForge: visible scrape error", err);
+        }
+      }
+      sendResponse({ businesses });
+      return;
     }
   });
 })();

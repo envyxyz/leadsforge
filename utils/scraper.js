@@ -1,7 +1,7 @@
 // Utility helpers reserved for future scraper expansion.
 // The active runtime scraper lives in content.js due to Google Maps page-context requirements.
 
-const MapLeadsScraperUtils = (() => {
+const LeadsForgeScraperUtils = (() => {
   function dedupeBusinesses(items) {
     const seen = new Set();
     return (Array.isArray(items) ? items : []).filter((item) => {
