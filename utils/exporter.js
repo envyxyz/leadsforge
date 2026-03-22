@@ -111,11 +111,13 @@ const LeadsForgeExporter = (() => {
     );
   }
 
-  function exportToGoogleSheets(data, includeAllFields = true) {
+  function exportToGoogleSheets(data, includeAllFields = true, onReady = null) {
     exportToCSV(data, "LeadsForge", includeAllFields);
     setTimeout(() => {
       chrome.tabs.create({ url: "https://sheets.new" });
-      alert("Google Sheets opened. Import the downloaded CSV via File > Import.");
+      if (typeof onReady === "function") {
+        onReady("Google Sheets opened! Import the CSV via File > Import.");
+      }
     }, 900);
   }
 

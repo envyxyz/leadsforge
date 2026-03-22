@@ -1,85 +1,124 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LeadsForge</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="popup.css" />
 </head>
+
 <body>
   <div class="popup-shell">
+
+    <!-- Header -->
     <header class="header">
       <div class="header-left">
-        <span class="logo-icon" aria-hidden="true">⚡</span>
+        <img src="./icons/icon.png" draggable="false" alt="logo" class="logo-svg" width="32" height="32">
         <div>
           <h1 class="title">LeadsForge</h1>
           <p class="subtitle">Google Maps Lead Scraper</p>
         </div>
       </div>
-      <div class="status-dot" id="statusDot" data-state="idle"></div>
+      <span class="version-badge" id="statusDot" data-state="idle">v2.0</span>
     </header>
 
+    <!-- Status Banner -->
     <div class="status-banner" id="statusBanner" data-state="idle">
-      <span class="status-icon">⚡</span>
       <span class="status-text" id="statusText">Ready to scan Google Maps</span>
     </div>
 
-    <!-- Filters Panel -->
-    <section class="filters-panel">
-      <div class="filters-grid">
-        <div class="filter-row">
-          <label class="filter-label" for="filterWebsite">Website Filter</label>
+    <!-- Filters -->
+    <section class="section-card">
+      <h2 class="section-label">FILTERS</h2>
+
+      <!-- Min Rating Slider -->
+      <div class="field-group">
+        <span class="field-title">Min Rating</span>
+        <input type="range" id="filterMinRating" min="0" max="5" step="0.5" value="0"
+          class="range-slider range-accent" />
+        <div class="range-labels">
+          <span id="minRatingVal">Any</span>
+          <span>5.0</span>
+        </div>
+      </div>
+
+      <!-- Scroll Depth Slider -->
+      <div class="field-group">
+        <span class="field-title">Scroll Depth</span>
+        <input type="range" id="scrollDepth" min="1" max="5" value="3" class="range-slider" />
+        <div class="range-labels">
+          <span>1x</span>
+          <span id="scrollDepthVal">5x</span>
+        </div>
+      </div>
+
+      <!-- Website Filter -->
+      <div class="field-group">
+        <span class="field-title">Website Filter</span>
+        <div class="select-wrapper">
           <select id="filterWebsite" class="filter-select">
             <option value="all">All Businesses</option>
             <option value="without">Without Website</option>
             <option value="with">With Website</option>
           </select>
+          <svg class="select-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M4 6L8 10L12 6" stroke="#6b7a90" stroke-width="1.5" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
         </div>
-        <div class="filter-row">
-          <label class="filter-label" for="filterMinRating">Min Rating: <span id="minRatingVal">Any</span></label>
-          <input type="range" id="filterMinRating" min="0" max="5" step="0.5" value="0" class="slider" />
-        </div>
-        <div class="filter-row">
-          <label class="filter-label" for="filterExcludeClosed">Exclude Closed</label>
-          <label class="toggle">
-            <input type="checkbox" id="filterExcludeClosed" checked />
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-        <div class="filter-row">
-          <label class="filter-label" for="filterDeepScan">Deep Scan <span class="badge-slow">Slower</span></label>
-          <label class="toggle">
-            <input type="checkbox" id="filterDeepScan" />
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-        <div class="filter-row slider-row">
-          <label class="filter-label" for="scrollDepth">Scroll Depth: <span id="scrollDepthVal">3x</span></label>
-          <input type="range" id="scrollDepth" min="1" max="10" value="3" class="slider" />
-        </div>
+      </div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <span class="field-title">Exclude Closed</span>
+        <label class="toggle">
+          <input type="checkbox" id="filterExcludeClosed" checked />
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span class="field-title">Deep Scan (Slower)</span>
+        <label class="toggle">
+          <input type="checkbox" id="filterDeepScan" />
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        </label>
       </div>
     </section>
 
-    <!-- Multi-Location Input -->
-    <section class="location-panel">
-      <label class="filter-label" for="locationInput">
-        📍 Locations <span class="badge-info">comma-separated</span>
-      </label>
-      <textarea id="locationInput" class="location-textarea" placeholder="e.g. plumbers in Chicago, dentists in Miami, FL" rows="2"></textarea>
-      <p class="location-hint">Enter multiple searches. Leave empty to scan current Maps page.</p>
+    <!-- Divider -->
+    <hr class="divider" />
+
+    <!-- Locations -->
+    <section class="section-card">
+      <div class="section-header-row">
+        <h2 class="section-label">LOCATIONS</h2>
+        <svg class="section-icon" width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path
+            d="M9 1.5C6.1 1.5 3.75 3.85 3.75 6.75C3.75 10.69 9 16.5 9 16.5C9 16.5 14.25 10.69 14.25 6.75C14.25 3.85 11.9 1.5 9 1.5Z"
+            stroke="#6b7a90" stroke-width="1.4" />
+          <circle cx="9" cy="6.75" r="2" stroke="#6b7a90" stroke-width="1.4" />
+        </svg>
+      </div>
+      <textarea id="locationInput" class="location-textarea"
+        placeholder="e.g. plumbers in Chicago, dentists in Miami, FL" rows="2"></textarea>
     </section>
 
-    <!-- Controls -->
+    <!-- Scan Button -->
     <section class="controls">
       <button class="btn-scan" id="btnScan" type="button">
-        <span class="btn-icon">🔍</span>
-        <span class="btn-text" id="scanButtonText">Start Scan</span>
+        <svg class="btn-scan-icon" width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <circle cx="7.5" cy="7.5" r="5.5" stroke="white" stroke-width="2" />
+          <path d="M12 12L16 16" stroke="white" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        <span class="btn-text" id="scanButtonText">START SCAN</span>
         <span class="btn-loader" id="btnLoader" aria-hidden="true"></span>
       </button>
-      <button class="btn-stop hidden" id="btnStop" type="button">⏹ Stop</button>
+      <button class="btn-stop hidden" id="btnStop" type="button">Stop Scan</button>
     </section>
 
     <!-- Progress -->
@@ -90,38 +129,34 @@
       <span class="progress-label" id="progressLabel"></span>
     </div>
 
-    <!-- Stats Bar -->
+    <!-- Stats -->
     <section class="stats-bar hidden" id="statsBar">
       <div class="stat-card">
-        <div class="stat-icon">🏢</div>
         <div class="stat-value" id="countTotal">0</div>
         <div class="stat-label">Scanned</div>
       </div>
-      <div class="stat-card accent-green">
-        <div class="stat-icon">🎯</div>
+      <div class="stat-card stat-accent">
         <div class="stat-value" id="countLeads">0</div>
         <div class="stat-label">Leads</div>
       </div>
-      <div class="stat-card accent-cyan">
-        <div class="stat-icon">📞</div>
+      <div class="stat-card">
         <div class="stat-value" id="countPhone">0</div>
-        <div class="stat-label">Has Phone</div>
+        <div class="stat-label">Phone</div>
       </div>
-      <div class="stat-card accent-purple">
-        <div class="stat-icon">📧</div>
+      <div class="stat-card">
         <div class="stat-value" id="countEmail">0</div>
-        <div class="stat-label">Has Email</div>
+        <div class="stat-label">Email</div>
       </div>
     </section>
 
-    <!-- Business Selection & Results -->
+    <!-- Results -->
     <section class="results-section hidden" id="resultsSection">
       <div class="results-header">
-        <span class="results-title">Scraped Leads</span>
+        <span class="section-label">RESULTS</span>
         <div class="results-actions">
-          <button class="btn-select-action" id="btnSelectAll" type="button">Select All</button>
-          <button class="btn-select-action" id="btnDeselectAll" type="button">Deselect</button>
-          <button class="btn-clear" id="btnClear" type="button">Clear</button>
+          <button class="btn-pill" id="btnSelectAll" type="button">Select All</button>
+          <button class="btn-pill" id="btnDeselectAll" type="button">Deselect</button>
+          <button class="btn-pill btn-pill-danger" id="btnClear" type="button">Clear</button>
         </div>
       </div>
       <div class="results-table-wrapper">
@@ -144,42 +179,44 @@
       <div class="results-count" id="resultsCount"></div>
     </section>
 
-    <!-- Export Panel -->
+    <!-- Export -->
     <section class="export-panel hidden" id="exportPanel">
-      <h3 class="export-title">Export Selected Leads</h3>
+      <h3 class="section-label">EXPORT</h3>
       <div class="export-options">
         <label class="checkbox-label">
           <input type="checkbox" id="exportAllFields" checked />
-          Include all fields
+          <span>Include all fields</span>
         </label>
       </div>
       <div class="export-buttons">
-        <button class="btn-export btn-excel" id="btnExcel" type="button">📊 Excel</button>
-        <button class="btn-export btn-csv" id="btnCSV" type="button">📄 CSV</button>
-        <button class="btn-export btn-sheets" id="btnSheets" type="button">🔗 Sheets</button>
+        <button class="btn-export btn-excel" id="btnExcel" type="button">Excel</button>
+        <button class="btn-export btn-csv" id="btnCSV" type="button">CSV</button>
+        <button class="btn-export btn-sheets" id="btnSheets" type="button">Sheets</button>
       </div>
     </section>
 
+    <!-- Footer -->
     <footer class="footer">
-      <span>⚡ LeadsForge v2.0</span>
-      <button class="btn-help" id="btnHelp" type="button">How to use?</button>
+      <span>LeadsForge v2.0</span>
+      <button class="btn-help" id="btnHelp" type="button">Help</button>
     </footer>
   </div>
 
+  <!-- Help Modal -->
   <div class="modal-overlay hidden" id="helpModal">
     <div class="modal">
-      <h3>How to Use LeadsForge</h3>
-      <ol>
-        <li>Open Google Maps in Chrome.</li>
+      <h3 class="modal-title">How to Use LeadsForge</h3>
+      <ol class="modal-list">
+        <li>Open Google Maps in your browser.</li>
         <li>Search for a business type and city, or enter multiple searches in the Locations field.</li>
         <li>Click the LeadsForge extension icon.</li>
-        <li>Set your filters (website preference, min rating, exclude closed).</li>
+        <li>Set your filters: website preference, min rating, exclude closed.</li>
         <li>Enable <strong>Deep Scan</strong> for social media links and detailed info.</li>
         <li>Click <strong>Start Scan</strong> and wait for completion.</li>
         <li>Select the businesses you want to export using checkboxes.</li>
         <li>Export to Excel, CSV, or Google Sheets.</li>
       </ol>
-      <button class="btn-close-modal" id="btnCloseModal" type="button">Got it! ✓</button>
+      <button class="btn-close-modal" id="btnCloseModal" type="button">Got it</button>
     </div>
   </div>
 
@@ -189,4 +226,5 @@
   <script src="utils/exporter.js"></script>
   <script src="popup.js"></script>
 </body>
+
 </html>

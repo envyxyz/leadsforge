@@ -128,7 +128,7 @@ function syncFiltersFromUI() {
   };
 
   el.scrollDepthVal.textContent = `${state.filters.scrollDepth}x`;
-  el.minRatingVal.textContent = state.filters.minRating > 0 ? `${state.filters.minRating}★` : "Any";
+  el.minRatingVal.textContent = state.filters.minRating > 0 ? `${state.filters.minRating}` : "Any";
 
   LeadsForgeStorage.saveSettings({ filters: state.filters });
   renderRows();
@@ -138,7 +138,7 @@ function syncFiltersFromUI() {
 function renderAll() {
   el.filterWebsite.value = state.filters.websiteFilter || "all";
   el.filterMinRating.value = String(state.filters.minRating || 0);
-  el.minRatingVal.textContent = state.filters.minRating > 0 ? `${state.filters.minRating}★` : "Any";
+  el.minRatingVal.textContent = state.filters.minRating > 0 ? `${state.filters.minRating}` : "Any";
   el.filterExcludeClosed.checked = state.filters.excludeClosed !== false;
   el.filterDeepScan.checked = state.filters.deepScan || false;
   el.scrollDepth.value = String(state.filters.scrollDepth || 3);
@@ -402,14 +402,14 @@ function setUiMode(mode) {
 
   if (state.isScanning) {
     el.btnScan.classList.add("loading");
-    el.scanButtonText.textContent = "Scanning...";
+    el.scanButtonText.textContent = "SCANNING...";
     el.btnStop.classList.remove("hidden");
     el.statusDot.dataset.state = "scanning";
     el.progressWrap.classList.remove("hidden");
     updateExportVisibility();
   } else {
     el.btnScan.classList.remove("loading");
-    el.scanButtonText.textContent = "Start Scan";
+    el.scanButtonText.textContent = "START SCAN";
     el.btnStop.classList.add("hidden");
     el.statusDot.dataset.state = mode === "error" ? "error" : "idle";
     if (mode !== "complete") {
@@ -673,8 +673,10 @@ function handleExportSheets() {
     showStatus("error", "No leads available to export.");
     return;
   }
-  LeadsForgeExporter.exportToGoogleSheets(data, includeAllFields);
-  showStatus("success", "CSV downloaded and Google Sheets opened.");
+  showStatus("scanning", "Preparing CSV and opening Google Sheets...");
+  LeadsForgeExporter.exportToGoogleSheets(data, includeAllFields, (msg) => {
+    showStatus("success", msg);
+  });
 }
 
 function truncate(value, max) {
