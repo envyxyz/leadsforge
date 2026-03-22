@@ -68,6 +68,18 @@ Whether you're a freelancer prospecting for web design clients, a sales professi
 
 ---
 
+### 🦊 Firefox (Developer Edition / Nightly)
+
+1. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`.
+2. Click **Load Temporary Add-on...**.
+3. Select the `manifest.json` file inside the `Leadforge` folder.
+4. The extension will appear in your toolbar and is ready to use!
+
+> [!NOTE]
+> Firefox requires `manifest.json` to have `browser_specific_settings`. I've already added this with a placeholder ID (`leadsforge@envy.xyz`) so it's ready to go.
+
+---
+
 ## 🛠️ Usage Guide
 
 ### Quick Start (Single Location)
