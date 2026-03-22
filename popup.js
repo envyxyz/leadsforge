@@ -5,14 +5,15 @@ const state = {
   allBusinesses: [],
   selectedIds: new Set(),
   filters: {
-    websiteFilter: "all",
+    mustHave: [],
     minRating: 0,
     excludeClosed: true,
     deepScan: false,
     scrollDepth: 3
   },
   locations: [],
-  currentLocationIndex: 0
+  currentLocationIndex: 0,
+  rawLocations: ""
 };
 
 const el = {};
@@ -34,10 +35,9 @@ function cacheElements() {
   el.btnStop = document.getElementById("btnStop");
   el.btnLoader = document.getElementById("btnLoader");
   el.scanButtonText = document.getElementById("scanButtonText");
-  el.filterWebsite = document.getElementById("filterWebsite");
+  el.mustHaveGroup = document.getElementById("mustHaveGroup");
   el.filterMinRating = document.getElementById("filterMinRating");
   el.minRatingVal = document.getElementById("minRatingVal");
-  el.filterExcludeClosed = document.getElementById("filterExcludeClosed");
   el.filterDeepScan = document.getElementById("filterDeepScan");
   el.scrollDepth = document.getElementById("scrollDepth");
   el.scrollDepthVal = document.getElementById("scrollDepthVal");
@@ -92,11 +92,11 @@ function bindEvents() {
     }
   });
 
-  el.filterWebsite.addEventListener("change", syncFiltersFromUI);
+  el.mustHaveGroup.addEventListener("change", syncFiltersFromUI);
   el.filterMinRating.addEventListener("input", syncFiltersFromUI);
-  el.filterExcludeClosed.addEventListener("change", syncFiltersFromUI);
   el.filterDeepScan.addEventListener("change", syncFiltersFromUI);
   el.scrollDepth.addEventListener("input", syncFiltersFromUI);
+  el.locationInput.addEventListener("input", syncFiltersFromUI);
 
   chrome.runtime.onMessage.addListener(onRuntimeMessage);
 }
@@ -109,6 +109,9 @@ async function hydrateFromStorage() {
     if (settings && settings.filters) {
       state.filters = { ...state.filters, ...settings.filters };
     }
+    if (settings && settings.rawLocations) {
+      state.rawLocations = settings.rawLocations;
+    }
     if (Array.isArray(cached) && cached.length > 0) {
       state.allBusinesses = cached;
       cached.forEach((b) => state.selectedIds.add(b.id));
@@ -119,10 +122,11 @@ async function hydrateFromStorage() {
 }
 
 function syncFiltersFromUI() {
+  const mustHave = [...el.mustHaveGroup.querySelectorAll("input:checked")].map((cb) => cb.value);
+
   state.filters = {
-    websiteFilter: el.filterWebsite.value,
+    mustHave,
     minRating: Number(el.filterMinRating.value),
-    excludeClosed: el.filterExcludeClosed.checked,
     deepScan: el.filterDeepScan.checked,
     scrollDepth: Number(el.scrollDepth.value)
   };
@@ -130,19 +134,24 @@ function syncFiltersFromUI() {
   el.scrollDepthVal.textContent = `${state.filters.scrollDepth}x`;
   el.minRatingVal.textContent = state.filters.minRating > 0 ? `${state.filters.minRating}` : "Any";
 
-  LeadsForgeStorage.saveSettings({ filters: state.filters });
+  state.rawLocations = el.locationInput.value;
+
+  LeadsForgeStorage.saveSettings({ filters: state.filters, rawLocations: state.rawLocations });
   renderRows();
   renderCounters();
 }
 
 function renderAll() {
-  el.filterWebsite.value = state.filters.websiteFilter || "all";
+  const savedMustHave = state.filters.mustHave || [];
+  el.mustHaveGroup.querySelectorAll("input[type='checkbox']").forEach((cb) => {
+    cb.checked = savedMustHave.includes(cb.value);
+  });
   el.filterMinRating.value = String(state.filters.minRating || 0);
   el.minRatingVal.textContent = state.filters.minRating > 0 ? `${state.filters.minRating}` : "Any";
-  el.filterExcludeClosed.checked = state.filters.excludeClosed !== false;
   el.filterDeepScan.checked = state.filters.deepScan || false;
   el.scrollDepth.value = String(state.filters.scrollDepth || 3);
   el.scrollDepthVal.textContent = `${state.filters.scrollDepth || 3}x`;
+  el.locationInput.value = state.rawLocations || "";
 
   renderRows();
   renderCounters();
@@ -464,16 +473,26 @@ function animateCounter(element, value) {
 function getVisibleRowsData() {
   let data = [...state.allBusinesses];
 
-  // Filter by website preference
-  if (state.filters.websiteFilter === "without") {
-    data = data.filter((b) => !b.hasWebsite);
-  } else if (state.filters.websiteFilter === "with") {
-    data = data.filter((b) => b.hasWebsite);
-  }
-
-  // Filter by closed status
-  if (state.filters.excludeClosed) {
-    data = data.filter((b) => !b.isPossiblyClosed && b.isOpen !== false);
+  // Filter by must-have fields
+  const mustHave = state.filters.mustHave || [];
+  if (mustHave.length > 0) {
+    data = data.filter((b) => {
+      return mustHave.every((field) => {
+        switch (field) {
+          case "email":    return b.email && b.email !== "N/A";
+          case "phone":    return b.phone && b.phone !== "N/A";
+          case "website":  return b.hasWebsite && b.website;
+          case "opened":   return !b.isPossiblyClosed && b.isOpen !== false;
+          case "facebook": return b.socials?.facebook;
+          case "instagram":return b.socials?.instagram;
+          case "twitter":  return b.socials?.twitter;
+          case "linkedin": return b.socials?.linkedin;
+          case "youtube":  return b.socials?.youtube;
+          case "tiktok":   return b.socials?.tiktok;
+          default:         return true;
+        }
+      });
+    });
   }
 
   // Filter by min rating

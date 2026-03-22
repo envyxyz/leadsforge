@@ -111,14 +111,25 @@ const LeadsForgeExporter = (() => {
     );
   }
 
-  function exportToGoogleSheets(data, includeAllFields = true, onReady = null) {
-    exportToCSV(data, "LeadsForge", includeAllFields);
+  async function exportToGoogleSheets(data, includeAllFields = true, onReady = null) {
+    const rows = normalizeRows(data, includeAllFields);
+    const csv = typeof Papa !== "undefined"
+      ? Papa.unparse(rows)
+      : rows.map((r) => Object.values(r).map((v) => `"${String(v || "").replace(/"/g, '""')}"`).join(",")).join("\n");
+
+    // Copy data to clipboard so user can paste directly into Sheets
+    try {
+      await navigator.clipboard.writeText(csv);
+    } catch (_) {
+      // Clipboard failed silently — user can still import manually
+    }
+
     setTimeout(() => {
       chrome.tabs.create({ url: "https://sheets.new" });
       if (typeof onReady === "function") {
-        onReady("Google Sheets opened! Import the CSV via File > Import.");
+        onReady("Google Sheets opened. Your data is copied — paste with Ctrl+V (or Cmd+V) to import.");
       }
-    }, 900);
+    }, 600);
   }
 
   return {

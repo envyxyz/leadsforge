@@ -3,9 +3,8 @@
     running: false,
     stopRequested: false,
     filters: {
-      websiteFilter: "all",
+      mustHave: [],
       minRating: 0,
-      excludeClosed: true,
       deepScan: false,
       scrollDepth: 3
     },
@@ -161,6 +160,26 @@
       document.querySelector("div[aria-label*='Results for' i]") ||
       document.querySelector(".m6QErb[aria-label]")
     );
+  }
+
+  // Waits up to `timeout` ms for the Maps feed to appear in the DOM
+  function waitForFeed(timeout = 15000) {
+    return new Promise((resolve, reject) => {
+      const start = Date.now();
+      const check = () => {
+        const feed = getFeedContainer();
+        if (feed) {
+          resolve(feed);
+          return;
+        }
+        if (Date.now() - start >= timeout) {
+          reject(new Error("Timed out waiting for Google Maps results list to load."));
+          return;
+        }
+        setTimeout(check, 400);
+      };
+      check();
+    });
   }
 
   function queryBySelectors(root, selectors) {
@@ -491,17 +510,28 @@
   function filterBusinesses(arr, filters) {
     let results = [...arr];
 
-    // Filter by closed status
-    if (filters.excludeClosed) {
-      results = results.filter((business) => !business.isPossiblyClosed && business.isOpen !== false);
+    // Filter by must-have fields
+    const mustHave = Array.isArray(filters.mustHave) ? filters.mustHave : [];
+    if (mustHave.length > 0) {
+      results = results.filter((business) =>
+        mustHave.every((field) => {
+          switch (field) {
+            case "email":     return business.email && business.email !== "N/A";
+            case "phone":     return business.phone && business.phone !== "N/A";
+            case "website":   return business.hasWebsite && business.website;
+            case "opened":    return !business.isPossiblyClosed && business.isOpen !== false;
+            case "facebook":  return business.socials?.facebook;
+            case "instagram": return business.socials?.instagram;
+            case "twitter":   return business.socials?.twitter;
+            case "linkedin":  return business.socials?.linkedin;
+            case "youtube":   return business.socials?.youtube;
+            case "tiktok":    return business.socials?.tiktok;
+            default:          return true;
+          }
+        })
+      );
     }
 
-    // Filter by website preference
-    if (filters.websiteFilter === "without") {
-      results = results.filter((business) => !business.hasWebsite);
-    } else if (filters.websiteFilter === "with") {
-      results = results.filter((business) => business.hasWebsite);
-    }
 
     // Filter by minimum rating
     const minRating = parseFloat(filters.minRating) || 0;
@@ -539,16 +569,9 @@
     const allBusinesses = [];
 
     try {
-      const feed = getFeedContainer();
-      if (!feed) {
-        throw new Error("Could not locate results list on this Google Maps page.");
-      }
-
-      chrome.runtime.sendMessage({
-        type: "SCAN_PROGRESS",
-        percent: 5,
-        stage: "Preparing scan..."
-      });
+      // Wait for the feed to appear (handles multi-location navigation delay)
+      chrome.runtime.sendMessage({ type: "SCAN_PROGRESS", percent: 2, stage: "Waiting for page to load..." });
+      const feed = await waitForFeed(15000);
 
       await autoScroll(feed, Number(SCAN_STATE.filters.scrollDepth) || 3);
 

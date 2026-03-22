@@ -35,58 +35,53 @@
     <section class="section-card">
       <h2 class="section-label">FILTERS</h2>
 
-      <!-- Min Rating Slider -->
-      <div class="field-group">
-        <span class="field-title">Min Rating</span>
-        <input type="range" id="filterMinRating" min="0" max="5" step="0.5" value="0"
-          class="range-slider range-accent" />
-        <div class="range-labels">
-          <span id="minRatingVal">Any</span>
-          <span>5.0</span>
+      <!-- Sliders Row -->
+      <div class="field-row">
+        <div class="field-group">
+          <span class="field-title">Min Rating</span>
+          <input type="range" id="filterMinRating" min="0" max="5" step="0.5" value="0" class="range-slider range-accent" />
+          <div class="range-labels">
+            <span id="minRatingVal">Any</span>
+            <span>5.0</span>
+          </div>
+        </div>
+        <div class="field-group">
+          <span class="field-title">Scroll Depth</span>
+          <input type="range" id="scrollDepth" min="1" max="5" value="3" class="range-slider" />
+          <div class="range-labels">
+            <span>1x</span>
+            <span id="scrollDepthVal">5x</span>
+          </div>
         </div>
       </div>
 
-      <!-- Scroll Depth Slider -->
+      <!-- Must Have Filter -->
       <div class="field-group">
-        <span class="field-title">Scroll Depth</span>
-        <input type="range" id="scrollDepth" min="1" max="5" value="3" class="range-slider" />
-        <div class="range-labels">
-          <span>1x</span>
-          <span id="scrollDepthVal">5x</span>
-        </div>
-      </div>
-
-      <!-- Website Filter -->
-      <div class="field-group">
-        <span class="field-title">Website Filter</span>
-        <div class="select-wrapper">
-          <select id="filterWebsite" class="filter-select">
-            <option value="all">All Businesses</option>
-            <option value="without">Without Website</option>
-            <option value="with">With Website</option>
-          </select>
-          <svg class="select-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M4 6L8 10L12 6" stroke="#6b7a90" stroke-width="1.5" stroke-linecap="round"
-              stroke-linejoin="round" />
-          </svg>
+        <span class="field-title">Must Have</span>
+        <p class="field-hint">Only include businesses that have all selected fields</p>
+        <div class="chip-group" id="mustHaveGroup">
+          <label class="chip"><input type="checkbox" value="email" /> Email</label>
+          <label class="chip"><input type="checkbox" value="phone" /> Phone</label>
+          <label class="chip"><input type="checkbox" value="website" /> Website</label>
+          <label class="chip"><input type="checkbox" value="opened" /> Opened</label>
+          <label class="chip"><input type="checkbox" value="facebook" /> Facebook</label>
+          <label class="chip"><input type="checkbox" value="instagram" /> Instagram</label>
+          <label class="chip"><input type="checkbox" value="twitter" /> Twitter</label>
+          <label class="chip"><input type="checkbox" value="linkedin" /> LinkedIn</label>
+          <label class="chip"><input type="checkbox" value="youtube" /> YouTube</label>
+          <label class="chip"><input type="checkbox" value="tiktok" /> TikTok</label>
         </div>
       </div>
 
       <!-- Toggles -->
-      <div class="toggle-row">
-        <span class="field-title">Exclude Closed</span>
-        <label class="toggle">
-          <input type="checkbox" id="filterExcludeClosed" checked />
-          <span class="toggle-track"><span class="toggle-thumb"></span></span>
-        </label>
-      </div>
-
-      <div class="toggle-row">
-        <span class="field-title">Deep Scan (Slower)</span>
-        <label class="toggle">
-          <input type="checkbox" id="filterDeepScan" />
-          <span class="toggle-track"><span class="toggle-thumb"></span></span>
-        </label>
+      <div class="field-row aligns-center pt-2">
+        <div class="toggle-row">
+          <span class="field-title mb-0">Deep Scan</span>
+          <label class="toggle">
+            <input type="checkbox" id="filterDeepScan" />
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          </label>
+        </div>
       </div>
     </section>
 
